@@ -1,0 +1,8 @@
+torch==2.15.0
+torchvision==0.29.2
+numpy==2.5.5
+scipy==1.18.1
+scikit-learn==1.9.1
+rdkit==2026.9.2
+pyarrow==26.0.1
+pillow==13.0.0

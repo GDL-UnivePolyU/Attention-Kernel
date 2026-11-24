@@ -1,0 +1,14 @@
+services:
+  base_torch:
+    image: ripper346/attention-kernel:latest
+    container_name: attention_kernel
+    tty: true
+    volumes:
+      - ./:/project
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ "0" ]
+              capabilities: [ gpu ]

@@ -1,0 +1,52 @@
+% Learning-curve figure. Data: scripts/make_curves.py -> <figures dir>/curve_{awa2,celeba,tox21}.dat.
+% Compile in that folder, e.g.:  cd results/figures && pdflatex ../../scripts/figures/curves.tex
+% Vertical line: \classline{k} at the size of the smallest class (8,000 samples per seed on AwA2 and CelebA).
+\documentclass[border=2pt]{standalone}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.17}
+\definecolor{kFeat}{HTML}{EB6834}
+\definecolor{kOne}{HTML}{6FB1F2}\definecolor{kTwo}{HTML}{1B4A96}
+\newlength{\lcW}\setlength{\lcW}{\dimexpr(347.12pt-96.78pt)/3\relax}% text width minus labels and gaps
+\pgfplotsset{
+  lcAxis/.style={scale only axis, width=\lcW, height=76pt, xmode=log, log basis x=2,
+    xmin=0.8, xmax=10000, xtick={1,4,16,64,256,1024,8192}, xticklabels={1,4,16,64,256,1k,all},
+    xlabel={labels per class}, tick label style={font=\tiny}, label style={font=\scriptsize},
+    xlabel style={yshift=3pt}, ylabel style={yshift=-3pt}, title style={font=\scriptsize, yshift=-4pt},
+    unbounded coords=jump, every axis plot/.append style={line width=0.85pt}},
+  lcLin/.style={kFeat, mark=o, mark size=1pt, thin},
+  lcRbf/.style={kFeat, mark=square, mark size=0.9pt, thin},
+  lcMix/.style={kFeat, thick, mark=none},
+  lcOne/.style={kOne, densely dashed, mark=none},
+  lcOneFeat/.style={kOne, solid, mark=none},
+  lcSum/.style={kTwo, densely dashed, mark=none},
+  lcSumFeat/.style={kTwo, solid, mark=none}}
+\newcommand{\featcurves}[1]{%
+  \addplot[lcLin] table[x=k, y=lin] {curve_#1.dat};
+  \addplot[lcRbf] table[x=k, y=rbf] {curve_#1.dat};
+  \addplot[lcMix] table[x=k, y=mix] {curve_#1.dat};}
+\newcommand{\ourcurves}[1]{%
+  \addplot[lcOne] table[x=k, y=one] {curve_#1.dat};
+  \addplot[lcOneFeat] table[x=k, y=onefeat] {curve_#1.dat};
+  \addplot[lcSum] table[x=k, y=sum] {curve_#1.dat};
+  \addplot[lcSumFeat] table[x=k, y=sumfeat] {curve_#1.dat};}
+\newcommand{\curves}[1]{\featcurves{#1}\ourcurves{#1}}
+\newcommand{\classline}[1]{\draw[black!35, densely dashed, thin]
+  ({axis cs:#1,0}|-{rel axis cs:0,0}) -- ({axis cs:#1,0}|-{rel axis cs:0,1});}
+\begin{document}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=3 by 1, horizontal sep=1.15cm}, lcAxis]
+\nextgroupplot[title={AwA2}, ylabel={avg.\ bal.\ acc.}, legend to name=curvelegend,
+    legend columns=4, legend style={font=\scriptsize, draw=none, column sep=8pt, row sep=0pt}, legend cell align=left]
+\featcurves{awa2} \addlegendimage{empty legend} \ourcurves{awa2} \classline{8}
+\addlegendentry{linear} \addlegendentry{RBF} \addlegendentry{linear + RBF} \addlegendentry{}
+\addlegendentry{$\mathcal{K}_1$} \addlegendentry{$\mathcal{K}_1$ + feature}%
+\addlegendentry{$\mathcal{K}_1+\mathcal{K}_2$} \addlegendentry{$\mathcal{K}_1+\mathcal{K}_2$ + feature}
+\nextgroupplot[title={CelebA}, ylabel={avg.\ bal.\ acc.}]
+\curves{celeba} \classline{64}
+\nextgroupplot[title={Tox21}, ylabel={avg.\ ROC-AUC}]
+\curves{tox21} \classline{64}
+\end{groupplot}
+\node[anchor=north] at ([yshift=-22pt]group c2r1.south) {\pgfplotslegendfromname{curvelegend}};
+\end{tikzpicture}
+\end{document}

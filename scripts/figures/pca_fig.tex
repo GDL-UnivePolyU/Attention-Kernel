@@ -1,0 +1,95 @@
+% PCA figure: test samples (seed 0) in the first two (left) and three (right) principal components of the
+% linear kernel and of the attention kernel learned on one and on two source tasks.
+% Data: scripts/pca_views.py -> <figures dir>/pca/{male,movement,arlbd}_{feat,one,two}.dat
+% Compile in the figures folder (pdflatex runs out of memory), e.g.:
+%   cd results/figures && lualatex ../../scripts/figures/pca_fig.tex && lualatex ../../scripts/figures/pca_fig.tex
+\documentclass[border=1pt]{standalone}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\usetikzlibrary{calc}
+\pgfplotsset{compat=1.17}
+\definecolor{cB}{HTML}{2A78D6}\definecolor{cO}{HTML}{EB6834}\definecolor{cG}{HTML}{1BAF7A}
+\definecolor{cY}{HTML}{EDA100}\definecolor{cP}{HTML}{9B59B6}
+\pgfplotsset{
+  discard if not/.style 2 args={x filter/.append code={\edef\tempa{\thisrow{#1}}\edef\tempb{#2}%
+      \ifx\tempa\tempb\else\def\pgfmathresult{inf}\fi}},
+  % male: 0 female, 1 male
+  mF/.style={only marks, mark=*, mark size=0.4pt, cB, fill opacity=0.35, draw opacity=0},
+  mM/.style={only marks, mark=square*, mark size=0.4pt, cO, fill opacity=0.5, draw opacity=0},
+  % movement: 0 swims, 1 flies, 2 walks, 3 hops, 4 tunnels
+  vW/.style={only marks, mark=*, mark size=0.35pt, cG, fill opacity=0.2, draw opacity=0},
+  vS/.style={only marks, mark=*, mark size=0.6pt, cB, fill opacity=0.7, draw opacity=0},
+  vH/.style={only marks, mark=triangle*, mark size=0.9pt, cY, fill opacity=0.9, draw opacity=0},
+  vF/.style={only marks, mark=square*, mark size=0.8pt, cP, fill opacity=1, draw opacity=0},
+  vT/.style={only marks, mark=diamond*, mark size=1.3pt, cO, fill opacity=1, draw opacity=0},
+  % Tox21 activity: 0 inactive, 1 active (5% of the molecules: larger markers with a white outline)
+  tI/.style={only marks, mark=*, mark size=0.35pt, cB, fill opacity=0.25, draw opacity=0},
+  tA/.style={only marks, mark=square*, mark size=1.2pt, cO, fill opacity=0.85, draw=white, line width=0.15pt},
+  pcaBase/.style={ticks=none, unbounded coords=discard, axis line style={black!60},
+    title style={font=\scriptsize, align=center, yshift=-3pt},
+    legend image post style={mark size=1.6pt, fill opacity=1}},
+  pca2/.style={pcaBase, scale only axis, width=1.85cm, height=1.85cm},
+  pca3/.style={pcaBase, scale only axis, width=1.9cm, height=1.9cm, view={35}{22},
+    xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, axis lines=box, axis line style={black!40},
+    grid=major, grid style={black!6}}}
+% one plot: #1 = male | move, #2 = file; 2-D or 3-D chosen by \dim
+\newcommand{\male}[2]{\addplot#1[mF, discard if not={c}{0}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[mM, discard if not={c}{1}] table[x=x, y=y, z=z] {pca/#2};}
+\newcommand{\move}[2]{\addplot#1[vW, discard if not={c}{2}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[vS, discard if not={c}{0}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[vH, discard if not={c}{3}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[vF, discard if not={c}{1}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[vT, discard if not={c}{4}] table[x=x, y=y, z=z] {pca/#2};}
+\newcommand{\tox}[2]{\addplot#1[tI, discard if not={c}{0}] table[x=x, y=y, z=z] {pca/#2};
+  \addplot#1[tA, discard if not={c}{1}] table[x=x, y=y, z=z] {pca/#2};}
+\begin{document}
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=3 by 3, horizontal sep=0.15cm, vertical sep=0.62cm}, pca2,
+    legend style={font=\scriptsize, draw=none, legend columns=-1, column sep=5pt}]
+% ---- row 1: CelebA, male from makeup (+ beard)
+\nextgroupplot[title={linear}, legend to name=legmale]
+  \male{}{male_feat.dat} \addlegendentry{female} \addlegendentry{male}
+\nextgroupplot[title={one source}]
+  \male{}{male_one.dat}
+\nextgroupplot[title={two sources}]
+  \male{}{male_two.dat}
+% ---- row 2: AwA2, movement from diet (+ habitat)
+\nextgroupplot[legend to name=legmove]
+  \move{}{movement_feat.dat}
+  \addlegendentry{walks} \addlegendentry{swims} \addlegendentry{hops} \addlegendentry{flies} \addlegendentry{tunnels}
+\nextgroupplot
+  \move{}{movement_one.dat}
+\nextgroupplot
+  \move{}{movement_two.dat}
+% ---- row 3: Tox21, NR-AR-LBD from NR-AR (+ NR-ER-LBD)
+\nextgroupplot[legend to name=legtox]
+  \tox{}{arlbd_feat.dat} \addlegendentry{inactive} \addlegendentry{active}
+\nextgroupplot
+  \tox{}{arlbd_one.dat}
+\nextgroupplot
+  \tox{}{arlbd_two.dat}
+\end{groupplot}
+% 3-D plots, each centred vertically on its row
+\begin{axis}[pca3, name=d1r1, at={($(group c3r1.east)+(0.45cm,0)$)}, anchor=west] \male{3}{male_feat.dat} \end{axis}
+\begin{axis}[pca3, name=d2r1, at={($(d1r1.east)+(0.12cm,0)$)}, anchor=west] \male{3}{male_one.dat} \end{axis}
+\begin{axis}[pca3, name=d3r1, at={($(d2r1.east)+(0.12cm,0)$)}, anchor=west] \male{3}{male_two.dat} \end{axis}
+\begin{axis}[pca3, name=d1r2, at={($(group c3r2.east)+(0.45cm,0)$)}, anchor=west] \move{3}{movement_feat.dat} \end{axis}
+\begin{axis}[pca3, name=d2r2, at={($(d1r2.east)+(0.12cm,0)$)}, anchor=west] \move{3}{movement_one.dat} \end{axis}
+\begin{axis}[pca3, name=d3r2, at={($(d2r2.east)+(0.12cm,0)$)}, anchor=west] \move{3}{movement_two.dat} \end{axis}
+\begin{axis}[pca3, name=d1r3, at={($(group c3r3.east)+(0.45cm,0)$)}, anchor=west] \tox{3}{arlbd_feat.dat} \end{axis}
+\begin{axis}[pca3, name=d2r3, at={($(d1r3.east)+(0.12cm,0)$)}, anchor=west] \tox{3}{arlbd_one.dat} \end{axis}
+\begin{axis}[pca3, name=d3r3, at={($(d2r3.east)+(0.12cm,0)$)}, anchor=west] \tox{3}{arlbd_two.dat} \end{axis}
+% column titles of the 3-D plots, level with the 2-D titles
+\foreach \d/\t in {d1/linear, d2/{one source}, d3/{two sources}}
+  \node[anchor=south, font=\scriptsize, yshift=3pt] at (\d r1.north |- group c1r1.north) {\t};
+\node[rotate=90, anchor=south, align=center, font=\scriptsize] at ($(group c1r1.west)+(-2pt,0)$)
+  {CelebA \emph{male}\\[-1pt]{\tiny from \emph{makeup}, \emph{beard}}};
+\node[rotate=90, anchor=south, align=center, font=\scriptsize] at ($(group c1r2.west)+(-2pt,0)$)
+  {AwA2 \emph{movement}\\[-1pt]{\tiny from \emph{diet}, \emph{habitat}}};
+\node[rotate=90, anchor=south, align=center, font=\scriptsize] at ($(group c1r3.west)+(-2pt,0)$)
+  {Tox21\\[-2pt]\emph{NR-AR-LBD}\\[-1pt]{\tiny from \emph{NR-AR},}\\[-3pt]{\tiny \emph{NR-ER-LBD}}};
+\path (group c1r1.south west) -- (d3r1.east |- group c1r1.south) node[midway, below=1pt] {\ref{legmale}};
+\path (group c1r2.south west) -- (d3r2.east |- group c1r2.south) node[midway, below=1pt] {\ref{legmove}};
+\path (group c1r3.south west) -- (d3r3.east |- group c1r3.south) node[midway, below=1pt] {\ref{legtox}};
+\end{tikzpicture}
+\end{document}
